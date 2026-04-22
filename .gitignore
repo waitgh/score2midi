@@ -21,3 +21,4 @@ soundfonts/
 
 # pyenv
 .python-version
+.DS_Store

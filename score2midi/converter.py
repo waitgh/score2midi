@@ -10,14 +10,16 @@ def to_midi(
     output_path: Path,
     tempo_bpm: int = None,
     time_sig: str = None,
+    instrument_name: str = None,
 ) -> Path:
     """Parse one or more MusicXML files and write a combined MIDI file.
 
     Args:
-        musicxml_paths: One MusicXML file per page.
-        output_path:    Destination .mid file.
-        tempo_bpm:      If set, overrides whatever tempo is in the score.
-        time_sig:       If set (e.g. "3/4"), overrides the time signature.
+        musicxml_paths:  One MusicXML file per page.
+        output_path:     Destination .mid file.
+        tempo_bpm:       If set, overrides whatever tempo is in the score.
+        time_sig:        If set (e.g. "3/4"), overrides the time signature.
+        instrument_name: If set (e.g. "Piano"), overrides the instrument on all parts.
     """
     if len(musicxml_paths) == 1:
         score = music21.converter.parse(str(musicxml_paths[0]))
@@ -29,6 +31,9 @@ def to_midi(
 
     if time_sig is not None:
         _set_time_signature(score, time_sig)
+
+    if instrument_name is not None:
+        _set_instrument(score, instrument_name)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     score.write("midi", fp=str(output_path))
@@ -60,6 +65,31 @@ def _set_time_signature(score: music21.stream.Score, time_sig: str) -> None:
         measures = part.getElementsByClass("Measure")
         if measures:
             measures[0].insert(0, ts)
+
+
+def _set_instrument(score: music21.stream.Score, names: str) -> None:
+    """Set instruments by part.
+
+    names: comma-separated list, e.g. "Piano" or "Voice,Piano".
+    - One name  → applied to all parts.
+    - Many names → applied per part in order; extras are ignored.
+    """
+    name_list = [n.strip() for n in names.split(",")]
+
+    for part_idx, part in enumerate(score.parts):
+        name = name_list[0] if len(name_list) == 1 else name_list[part_idx] if part_idx < len(name_list) else None
+        if name is None:
+            continue
+        try:
+            inst = music21.instrument.fromString(name)
+        except music21.instrument.InstrumentException:
+            raise ValueError(
+                f"Unknown instrument '{name}'. "
+                "Examples: Piano, Violin, Flute, Guitar, Voice, Trumpet, Cello."
+            )
+        for existing in list(part.getElementsByClass(music21.instrument.Instrument)):
+            part.remove(existing)
+        part.insert(0, inst)
 
 
 def _combine(paths: list[Path]) -> music21.stream.Score:

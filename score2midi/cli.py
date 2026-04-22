@@ -35,6 +35,9 @@ def convert(
     time_sig: Optional[str] = typer.Option(
         None, "--time-sig", help="Override time signature (e.g. '3/4'). Default: use value from score."
     ),
+    instrument: Optional[str] = typer.Option(
+        None, "--instrument", "-i", help="Instrument(s) for playback. One value applies to all parts (e.g. Piano). Comma-separated applies per part (e.g. 'Voice,Piano')."
+    ),
     save_musicxml: Optional[Path] = typer.Option(
         None, "--save-musicxml", help="Save the intermediate MusicXML here for inspection in MuseScore."
     ),
@@ -89,9 +92,11 @@ def convert(
             console.print(f"  Tempo override: [bold]{tempo} BPM[/bold]")
         if time_sig is not None:
             console.print(f"  Time signature override: [bold]{time_sig}[/bold]")
+        if instrument is not None:
+            console.print(f"  Instrument: [bold]{instrument}[/bold]")
         midi_path = work_dir / "output.mid"
         try:
-            midi_path = converter.to_midi(mxl_paths, midi_path, tempo_bpm=tempo, time_sig=time_sig)
+            midi_path = converter.to_midi(mxl_paths, midi_path, tempo_bpm=tempo, time_sig=time_sig, instrument_name=instrument)
         except Exception as exc:
             console.print(f"[red]MIDI conversion failed:[/red] {exc}")
             raise typer.Exit(1)
@@ -131,6 +136,9 @@ def from_xml(
     time_sig: Optional[str] = typer.Option(
         None, "--time-sig", help="Override time signature (e.g. '3/4')"
     ),
+    instrument: Optional[str] = typer.Option(
+        None, "--instrument", "-i", help="Instrument(s) for playback. One value applies to all parts (e.g. Piano). Comma-separated applies per part (e.g. 'Voice,Piano')."
+    ),
 ):
     """Convert an existing MusicXML file to audio — skips the slow OMR step."""
     if not musicxml_file.exists():
@@ -160,9 +168,11 @@ def from_xml(
             console.print(f"  Tempo: [bold]{tempo} BPM[/bold]")
         if time_sig is not None:
             console.print(f"  Time signature: [bold]{time_sig}[/bold]")
+        if instrument is not None:
+            console.print(f"  Instrument: [bold]{instrument}[/bold]")
         midi_path = work_dir / "output.mid"
         try:
-            midi_path = converter.to_midi([musicxml_file], midi_path, tempo_bpm=tempo, time_sig=time_sig)
+            midi_path = converter.to_midi([musicxml_file], midi_path, tempo_bpm=tempo, time_sig=time_sig, instrument_name=instrument)
         except Exception as exc:
             console.print(f"[red]MIDI conversion failed:[/red] {exc}")
             raise typer.Exit(1)
