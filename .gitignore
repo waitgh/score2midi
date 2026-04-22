@@ -1,0 +1,23 @@
+.venv/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+
+# Audiveris working files
+*.omr
+*.log
+
+# Test / scratch output
+*.mp3
+*.wav
+*.mid
+*.midi
+*.musicxml
+*.mxl
+
+# Soundfonts are large — user must provide their own
+soundfonts/
+
+# pyenv
+.python-version
