@@ -11,6 +11,7 @@ def to_midi(
     tempo_bpm: int = None,
     time_sig: str = None,
     instrument_name: str = None,
+    volumes: str = None,
 ) -> Path:
     """Parse one or more MusicXML files and write a combined MIDI file.
 
@@ -20,6 +21,7 @@ def to_midi(
         tempo_bpm:       If set, overrides whatever tempo is in the score.
         time_sig:        If set (e.g. "3/4"), overrides the time signature.
         instrument_name: If set (e.g. "Piano"), overrides the instrument on all parts.
+        volumes:         Comma-separated volumes 0-100 per part (e.g. "100,50").
     """
     if len(musicxml_paths) == 1:
         score = music21.converter.parse(str(musicxml_paths[0]))
@@ -34,6 +36,9 @@ def to_midi(
 
     if instrument_name is not None:
         _set_instrument(score, instrument_name)
+
+    if volumes is not None:
+        _set_volumes(score, volumes)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     score.write("midi", fp=str(output_path))
@@ -90,6 +95,18 @@ def _set_instrument(score: music21.stream.Score, names: str) -> None:
         for existing in list(part.getElementsByClass(music21.instrument.Instrument)):
             part.remove(existing)
         part.insert(0, inst)
+
+
+def _set_volumes(score: music21.stream.Score, volumes: str) -> None:
+    """Set playback volume per part. volumes is comma-separated 0-100 values.
+    One value applies to all parts; multiple apply per part in order."""
+    vol_list = [int(v.strip()) for v in volumes.split(",")]
+    for part_idx, part in enumerate(score.parts):
+        v = vol_list[0] if len(vol_list) == 1 else vol_list[part_idx] if part_idx < len(vol_list) else None
+        if v is None:
+            continue
+        for note in part.recurse().notes:
+            note.volume.velocity = int(v / 100 * 127)
 
 
 def _combine(paths: list[Path]) -> music21.stream.Score:

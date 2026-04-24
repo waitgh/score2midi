@@ -38,6 +38,9 @@ def convert(
     instrument: Optional[str] = typer.Option(
         None, "--instrument", "-i", help="Instrument(s) for playback. One value applies to all parts (e.g. Piano). Comma-separated applies per part (e.g. 'Voice,Piano')."
     ),
+    volumes: Optional[str] = typer.Option(
+        None, "--volumes", "-v", help="Volume per part, 0-100. One value for all (e.g. 80), or comma-separated per part (e.g. '100,50' for loud voice, quieter piano)."
+    ),
     save_musicxml: Optional[Path] = typer.Option(
         None, "--save-musicxml", help="Save the intermediate MusicXML here for inspection in MuseScore."
     ),
@@ -94,9 +97,11 @@ def convert(
             console.print(f"  Time signature override: [bold]{time_sig}[/bold]")
         if instrument is not None:
             console.print(f"  Instrument: [bold]{instrument}[/bold]")
+        if volumes is not None:
+            console.print(f"  Volumes: [bold]{volumes}[/bold]")
         midi_path = work_dir / "output.mid"
         try:
-            midi_path = converter.to_midi(mxl_paths, midi_path, tempo_bpm=tempo, time_sig=time_sig, instrument_name=instrument)
+            midi_path = converter.to_midi(mxl_paths, midi_path, tempo_bpm=tempo, time_sig=time_sig, instrument_name=instrument, volumes=volumes)
         except Exception as exc:
             console.print(f"[red]MIDI conversion failed:[/red] {exc}")
             raise typer.Exit(1)
@@ -139,6 +144,9 @@ def from_xml(
     instrument: Optional[str] = typer.Option(
         None, "--instrument", "-i", help="Instrument(s) for playback. One value applies to all parts (e.g. Piano). Comma-separated applies per part (e.g. 'Voice,Piano')."
     ),
+    volumes: Optional[str] = typer.Option(
+        None, "--volumes", "-v", help="Volume per part, 0-100. One value for all (e.g. 80), or comma-separated per part (e.g. '100,50' for loud voice, quieter piano)."
+    ),
 ):
     """Convert an existing MusicXML file to audio — skips the slow OMR step."""
     if not musicxml_file.exists():
@@ -170,6 +178,8 @@ def from_xml(
             console.print(f"  Time signature: [bold]{time_sig}[/bold]")
         if instrument is not None:
             console.print(f"  Instrument: [bold]{instrument}[/bold]")
+        if volumes is not None:
+            console.print(f"  Volumes: [bold]{volumes}[/bold]")
         midi_path = work_dir / "output.mid"
         try:
             midi_path = converter.to_midi([musicxml_file], midi_path, tempo_bpm=tempo, time_sig=time_sig, instrument_name=instrument)

@@ -15,7 +15,7 @@ def midi_to_wav(midi_path: Path, output_path: Path, soundfont: Path = None) -> P
     cmd = [
         "fluidsynth",
         "-ni",                  # non-interactive, no audio driver
-        "-F", str(wav_path),    # write output to file
+        "-F", str(wav_path),    # must come before soundfont argument
         str(sf),
         str(midi_path),
     ]
